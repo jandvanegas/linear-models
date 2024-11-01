@@ -1,0 +1,44 @@
+# Estimator of $\sigma^2$
+Set up a simulation study to empirically demonstrate that the MLE of $\sigma^2$ 
+is asymptotically unbiased. So we want you to repeat a simulation study for 
+several choices of the sample size $n$ so as to show that the bias reduces as 
+$n$ increases.
+
+```{r}
+estimate_beta <- function(n) {
+  set.seed(75286)
+  sigma2 <- 1
+  x <- seq(1, 10, length.out = n)
+  results <- data.frame(beta0Hat = NA, beta1Hat = NA, sigma.MLE = NA, sigma.MSE = NA)
+  sim_number <- 100
+  for (i in 1:sim_number) {
+    y <- 90 + 0.5 * x + rnorm(n, sd = sqrt(sigma2))
+    m <- lm(y ~ x)
+    results[i, ] <- c(coef(m), sigma.MLE = mean(residuals(m)^2), sigma.MSE = sum(residuals(m)^2) / (n - 2))
+  }
+  return(results)
+}
+sample.sizes <- c(3, 5, 10, 20, 50, 75, 100)
+sigma2.MLE <- c()
+sigma2.MSE <- c()
+for (n in sample.sizes) {
+  results <- estimate_beta(n)
+  sigma2.MLE <- c(sigma2.MLE, mean(results$sigma.MLE))
+  sigma2.MSE <- c(sigma2.MSE, mean(results$sigma.MSE))
+}
+
+par(mfrow = c(1, 2))
+plot(sample.sizes, sigma2.MLE,
+  ylim = c(0, 1.2),
+  xlab = "sample size", ylab = "MLE estimate of sigma^2",
+  main = "MLE"
+)
+abline(h = 1, lty = 2, col = 2)
+
+plot(sample.sizes, sigma2.MSE,
+  ylim = c(0, 1.2),
+  xlab = "sample size", ylab = "MSE estimate of sigma^2",
+  main = "MSE"
+)
+abline(h = 1, lty = 2, col = 2)
+```

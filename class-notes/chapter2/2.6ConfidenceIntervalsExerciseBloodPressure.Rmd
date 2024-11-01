@@ -1,0 +1,20 @@
+## Reading data
+```{r}
+load("Data/BloodPressure.RData")
+```
+
+```{r}
+m.bloodpressure <- lm(BloodPressure$bp.reduction ~ BloodPressure$dose)
+model_summary <- summary(m.bloodpressure)
+coefs <- coefficients(model_summary)
+
+std_errors <- coefs[, "Std. Error"]
+betas_estimation <- coefs[, "Estimate"]
+beta1_estimation <- betas_estimation["BloodPressure$dose"]
+beta1_variance_estimation <- std_errors["BloodPressure$dose"]
+n <- nrow(BloodPressure)
+lowerci <- beta1_estimation - qt(0.975, df = n - 2) * beta1_variance_estimation
+upperci <- beta1_estimation + qt(0.975, df = n - 2) * beta1_variance_estimation
+print(lowerci)
+print(upperci)
+```

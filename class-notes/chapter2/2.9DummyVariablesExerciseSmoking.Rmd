@@ -1,0 +1,26 @@
+# Exercise Smoking:
+
+We are presented with a sample of 654 youths, aged 3 to 19 years, in the area 
+of East Boston during middle to late 1970’s. Interest concerns the 
+relationship between smoking and FEV (forced expiratory volume; it measures 
+how much air a person can exhale during a forced breath, measured in liters). 
+In the dataset, the smoke variable is already coded as a dummy variable: smoke
+=0 refers to non-smokers and smoke=1 refers to smokers.
+
+We read the data
+```{r}
+fev <- read.csv("Data/fevdata.txt", sep = " ")
+names(fev) <- c("age", "fev", "height", "sex", "smoke")
+```
+Plot 
+```{r}
+boxplot(fev$fev ~ fev$smoke, ylab = "FEV (liters)", xlab = "smoke")
+```
+
+We create the model
+```{r}
+t.test(
+  fev$fev ~ fev$smoke,
+  var.equal = TRUE
+)
+```

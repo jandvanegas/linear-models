@@ -1,0 +1,71 @@
+# Properties of mean and Variances
+
+## First property $E\{\hat{\beta}\} = \beta$
+
+We repeat the prediction of m, considering that $\beta_0=90$ and $\beta_1=0.5$
+```{r}
+set.seed(75286)
+estimate_beta <- function(N) {
+  set.seed(75286)
+  x <- c(165, 170, 175, 180, 185) # five father's heights
+  beta_hat <- data.frame(beta0Hat = NA, beta1Hat = NA)
+  for (i in 1:N) {
+    y <- 90 + 0.5 * x + rnorm(5, sd = 5)
+    m <- lm(y ~ x)
+    beta_hat[i, ] <- coef(m)
+  }
+  return(colMeans(beta_hat))
+}
+
+for (n in c(1, 10, 100, 1000)) {
+  print(paste("For n =", n))
+  print(estimate_beta(n))
+}
+```
+The bigger $N$, the more it goes closer to the real values.
+
+## Second property $Var\{\hat{\beta}\} = (X^{T}X)^{-1}*\sigma^2$
+
+First we get the variance of $\hat{\beta}$ by the formula
+```{r}
+x <- c(165, 170, 175, 180, 185) # five father's heights
+X <- matrix(nrow = 5, ncol = 2)
+X[, 1] <- 1
+X[, 2] <- x
+solve(t(X) %*% X) * 25
+```
+We test this by simulations
+```{r}
+set.seed(6247467)
+N <- 10000 # number of repeated experiments
+x <- c(165, 170, 175, 180, 185) # five father's heights
+betaHat5 <- data.frame(beta0Hat = NA, beta1Hat = NA)
+for (i in 1:N) {
+  y <- 90 + 0.5 * x + rnorm(5, sd = 5) # random sample of 5 outcomes
+  m <- lm(y ~ x)
+  betaHat5[i, ] <- coef(m)
+}
+var(betaHat5)
+```
+We can see that the values are close.
+
+If we increase n from 5 to 50
+```{r}
+set.seed(6247467)
+N <- 10000 # number of repeated experiments
+x <- c(165, 170, 175, 180, 185) # five father's heights
+x <- rep(x, 10) # the five father's heights are replicated 10 times
+betaHat50 <- data.frame(beta0Hat = NA, beta1Hat = NA)
+for (i in 1:N) {
+  y <- 90 + 0.5 * x + rnorm(50, sd = 5) # random sample of 50 outcomes
+  m <- lm(y ~ x)
+  betaHat50[i, ] <- coef(m)
+}
+X <- matrix(nrow = 50, ncol = 2)
+X[, 1] <- 1
+X[, 2] <- x
+Var50 <- solve(t(X) %*% X) * 25
+print(paste("VAriance by simulation", var(betaHat50)))
+print(paste("Variance by formula", EmpVar50))
+```
+

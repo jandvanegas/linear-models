@@ -1,0 +1,66 @@
+
+# Muscle mass
+Scientists suspect that the muscle mass of people starts declining from a 
+certain age onwards.  To verify this research question, a nutritionist 
+randomly sampled 59 women, aged between 41 and 78. For these women; also the 
+muscle mass was measured (we actually only have a proxy based on 
+bioelectrical impedance measurements).
+
+Perform a regression analysis and formulate an answer to this research 
+question (including parameter estimates, confidence interval and hypothesis 
+test). You may use the next chunk of R code for reading the 
+data.
+
+```{r}
+muscles <- read.csv("Data/Muscles.txt", sep = " ")
+names(muscles) <- c("muscle.mass", "age")
+skim(muscles)
+```
+## Model
+```{r}
+m <- lm(muscle.mass ~ age, data = muscles)
+```
+
+## Linearity of the regression model
+```{r}
+e <- m$residuals
+x.all <- unique(muscles$age)
+ave.e <- c()
+for (x in x.all) {
+  ave.e <- c(ave.e, mean(e[muscles$age == x]))
+}
+par(mfrow=c(1,1))
+plot(muscles$age, e,
+  cex.lab = 1.5, cex.axis = 1.5,
+  xlab = "Age (years)", ylab = "residuals"
+)
+points(x.all, ave.e, col = 2, pch = 8)
+abline(h = 0, lty = 2)
+```
+
+## Normality of the error terms
+```{r}
+par(mfrow=c(1,2))
+qqnorm(m$resid,cex.lab=1.5,cex.axis=1.5,
+       xlab="expected quantiles",ylab="residuals",main="")
+qqline(m$resid)
+
+boxplot(m$residuals, ylab="residuals")
+```
+
+## Homoskedasticity
+```{r}
+par(mfrow=c(1,2))
+e<-m$residuals
+plot(muscles$age,e^2,cex.lab=1.5,cex.axis=1.5,
+     xlab="Age (years)",
+     ylab="Squared residuals")
+abline(h=sum(m$residuals^2)/(173-2),lty=2)
+
+e<-m$residuals
+plot(muscles$age,abs(e),cex.lab=1.5,cex.axis=1.5,
+     xlab="Age (years)"
+     ,ylab="absolute value of the residuals")
+abline(h=sum(abs(m$residuals))/(173-2),lty=2)
+```
+

@@ -1,0 +1,4 @@
+# To allow the markdown to be rendered in the console
+options(radian.auto_match = FALSE)
+options(radian.theme = "tomorrow_night_bright")
+options(radian.editing_mode = "vim")

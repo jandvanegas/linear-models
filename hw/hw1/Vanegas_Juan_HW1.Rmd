@@ -1,0 +1,133 @@
+---
+title: "Linear Models: Homework 1"
+author: "Juan Andres VANEGAS JADAN"
+date: "2024-2025"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r include=FALSE}
+library(dplyr)
+library(skimr)
+library(ggplot2)
+```
+
+# Answers to the questions
+
+## Question 1a
+
+Each ug increase of ADDF17 has the effect of increasing 1.0714mg/L on the mean of IgG1 levels.
+
+## Question 1b
+
+The 95% confidence interval lies between 0.44 and 1.7 mg/L, indicating that the effect is
+likely posible, as 0 is not included. This interval suggest that 
+for each ug of ADDF17, the mean of IgG1 would increase between between 0.44 and 1.7 mg/L
+with 95% of probability. 
+With a standard error of 0.31, the estimation of the effect of ADDF17
+over IgG1 has a moderate variability.
+
+## Question 1c
+
+The effect of ADDF17 over IgG1 levels is statistically significant, with a p-value of 
+0.001, This result suggests that ADDF17 concentration has a meaningful impact on IgG1 levels.
+
+The p-value was calculated with a two-sided test $H1: \neq 0$, as there was 
+no prior information on wheather ADDF17 would increase or decrease IgG1 levels.
+
+## Question 1d
+
+If we do not include the doses of 2ug, we obtain a lower value for the estimation,
+equals to 0.8252. Furthermore with a p-value of 0.239, this estimation would not be significant.
+
+The non significance can also be reiterated looking at the confidence interval. This would 
+include values from -0.56 to 2.21, giving inconclusive information if the 
+ADDF17 concentration would increase or decrease the IgG1 levels.
+
+## Question 2
+
+The simulations reveal that the 2ug doses samples play a key role for obtaining
+significant estimations. When we include them, 71% of the simulations return
+a significant estimations. In contrast, when we exclude them, only 20% of the 
+simulations return significant estimations. One reason could be that the higher doses 
+samples have a larger and more consistent effect.
+
+\newpage
+
+# Appendix with R code
+
+## Question 1
+
+```{r}
+home_path <- Sys.getenv("HOME")
+setwd(paste(home_path, "/academics/hasselt/linear-models", sep = ""))
+load(file = "Data/mice.RData")
+str(mice)
+
+plot(mice$concentration, mice$IgG1)
+```
+
+Definition of the linear model.
+```{r}
+m <- lm(mice$IgG1 ~ mice$concentration)
+summary(m)
+```
+Estimation and variance of the estimation give us:
+```{r}
+coef_est <- coef(summary(m))
+beta1_hat <- coef_est["mice$concentration", "Estimate"]
+sigma2_beta1 <- coef_est["mice$concentration", "Std. Error"]
+print(paste("The parameter beta1 is estimated to: ", beta1_hat))
+print(paste("and it has a std deviation of ", sigma2_beta1))
+```
+Computation of the confidence interval give us:
+```{r}
+lowerci <- beta1_hat - qt(0.975, df = nrow(mice) - 2) * sigma2_beta1
+upperci <- beta1_hat + qt(0.975, df = nrow(mice) - 2) * sigma2_beta1
+print(paste("The confidence intervale is beetween ", lowerci, " and ", upperci))
+```
+Computation of the p-value at two sides give us:
+```{r}
+t_observed <- beta1_hat / sigma2_beta1
+p.value.twosided <- 2 * (1 - pt(abs(t_observed), df = nrow(mice) - 2))
+print(paste("The p-value of the parameter estimation is of ", p.value.twosided))
+```
+If we evaluate the same data but excluding the dose of 2ug
+```{r}
+mice_filtered <- mice %>% filter(concentration != 2)
+m_filtered <- lm(IgG1 ~ concentration, data = mice_filtered)
+summary(m_filtered)
+confint(m_filtered)
+```
+
+
+## Question 2
+
+```{r}
+set.seed(2678)
+
+p1 <- p2 <- vector(length = 1000)
+for (i in 1:1000) {
+  conc2 <- mice$concentration
+  mice2 <- data.frame(
+    concentration = mice$concentration,
+    IgG1 = 3 + 0.83 * conc2 + rnorm(62, sd = 0.9)
+  )
+  conc1 <- mice$concentration[mice$concentration < 2]
+  mice1 <- data.frame(
+    concentration = conc1,
+    IgG1 = 3 + 0.83 * conc1 + rnorm(60, sd = 0.9)
+  )
+
+  m2 <- lm(IgG1 ~ concentration, data = mice2)
+  p2[i] <- summary(m2)$coef[2, 4]
+
+  m1 <- lm(IgG1 ~ concentration, data = mice1)
+  p1[i] <- summary(m1)$coef[2, 4]
+}
+
+mean(p2 < 0.05)
+mean(p1 < 0.05)
+```

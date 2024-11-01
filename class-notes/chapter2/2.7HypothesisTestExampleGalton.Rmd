@@ -1,0 +1,43 @@
+# Galton example
+## Libraries
+
+## Libraries
+```{r}
+library(dplyr)
+library(skimr)
+library(ggplot2)
+```
+## Load data
+```{r}
+home_path <- Sys.getenv("HOME")
+setwd(paste(home_path, "/academics/hasselt/linear-models", sep = ""))
+Galton <- read.csv("./Data/galton.tab", sep = "\t")
+```
+## Filter
+```{r}
+Galton.sons <- Galton %>%
+  filter(gender == "M") %>%
+  group_by(family) %>%
+  slice(1) %>%
+  ungroup() %>%
+  mutate(
+    father.cm = father * 2.54,
+    son.cm = height * 2.54
+  ) %>%
+  select(father.cm, son.cm)
+```
+Getting the $\hat{\sigma^2}_{\hat{\beta_x}}$
+```{r}
+m <- lm(son.cm ~ father.cm, data = Galton.sons)
+m_summary <- summary(m)
+b1.hat <- coef(m_summary)[, "Estimate"]["father.cm"]
+sigma2.hat <- coef(m_summary)[, "Std. Error"]["father.cm"]
+t.observed <- b1.hat / sigma2.hat
+p.value.twosided <- 2 * (1 - pt(abs(t.observed), df = nrow(Galton.sons) - 2))
+```
+>![Note] lm always gives the two sided alternative hypothesis 
+To get the one sided alternative hypothesis
+
+```{r}
+p.value.onesided <- p.value.twosided / 2
+```

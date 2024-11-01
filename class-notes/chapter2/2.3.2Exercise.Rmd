@@ -1,0 +1,47 @@
+# 2.3.2 BLUE
+
+Repeat this simulation study with 10000 Monte Carlo simulation runs, but now 
+with another estimator of $\beta$. With our conventional notation, define the 
+following esimator,
+$$
+\tilde{\beta} = ({X}^t{X}+d{I}_2)^{-1}{X}^t{Y},
+$$
+
+```{r}
+x <- c(165, 170, 175, 180, 185) # five father's heights
+X <- cbind(1, x) # design matrix
+betaHatLSE <- data.frame(beta0Hat = NA, beta1Hat = NA)
+betaHatNew <- data.frame(beta0Hat = NA, beta1Hat = NA)
+MSELSE <- matrix(nrow = N, ncol = 2)
+MSENew <- matrix(nrow = N, ncol = 2)
+for (i in 1:N) {
+  y <- 90 + 0.5 * x + rnorm(5, sd = 5) # random sample of 5 outcomes
+  m <- lm(y ~ x)
+  betaHatLSE[i, ] <- coef(m)
+  MSELSE[i, ] <- (coef(m) - c(90, 0.5))^2
+  betaTilde <- solve(t(X) %*% X + 0.005 * diag(2)) %*% t(X) %*% y
+  betaHatNew[i, ] <- betaTilde
+  MSENew[i, ] <- (betaTilde - c(90, 0.5))^2
+}
+
+print(colMeans(betaHatLSE))
+print(colMeans(betaHatNew))
+```
+
+## Note about solve:
+When used to solve a system of linear equations of the form (Ax = b), solve 
+finds the vector (x) that satisfies the equation.
+```{r}
+A <- matrix(c(2, 1, 1, 3), nrow = 2)
+b <- c(1, 2)
+x <- solve(A, b)
+print(x) 
+`````
+Here solve function finds the inverse of a matrix. When used with a 
+single argument, solve computes the inverse of the matrix. This is equivalent 
+to solving the equation (AX = I) for (X), where (I) is the identity matrix. 
+```{r}
+A <- matrix(c(2, 1, 1, 3), nrow = 2)
+A_inv <- solve(A)
+print(A_inv)
+```

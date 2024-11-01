@@ -1,0 +1,85 @@
+
+# LSE Properties
+We repreat the previous experiment, but now we compute the LSE of te $\beta$ parameters
+
+```{r}
+sigma <- 5
+b0 <- 90
+b1 <- 0.5
+set.seed(75286)
+N <- 100
+x <- c(165, 170, 175, 180, 185)
+betaHat <- data.frame(beta0Hat = NA, beta1Hat = NA)
+for (experiment in 1:N) {
+  y <- b0 + b1 * x + rnorm(5, sd = sigma)
+  m <- lm(y ~ x)
+  betaHat <- rbind(betaHat, coef(m))
+}
+estimated_beta <- colMeans(betaHat)
+estimated_variance <- var(betaHat)
+
+X <- matrix(nrow = 5, ncol = 2)
+X[, 1] <- 1
+X[, 2] <- x
+real_covariance <- solve(t(X) %*% X) * sigma^2 # t = transpose, %*% = matrix multiplication
+```
+You can try with N = 1000, and see that the estimated variance is closer to the real variance.
+
+To get a better understanding of variance, we repeat the simulation with more than one son by father. Before it was 1, now it is 10.
+```{r}
+N <- 10000
+set.seed(6247467)
+sons_by_father <- 10
+x <- rep(c(165, 170, 175, 180, 185, sons_by_father))
+beta_hat_50 <- data.frame(beta0Hat = NA, beta1Hat = NA)
+for (i in 1:N) {
+  b0 <- 90
+  b1 <- 0.5
+  y <- b0 + b1 * x + rnorm(length(x), sd = sigma)
+  m <- lm(y ~ x)
+  beta_hat_50[i, ] <- coef(m)
+}
+estimated_beta <- colMeans(beta_hat_50)
+estimated_variance <- var(beta_hat_50)
+print(estimated_variance)
+print(estimated_beta)
+X <- matrix(nrow = length(x), ncol = 2)
+X[, 1] <- 1
+X[, 2] <- x
+real_covariance <- solve(t(X) %*% X) * sigma^2 # t = transpose, %*% = matrix multiplication
+print(real_covariance)
+```
+### Sampling distribution of the LSE
+```{r}
+set.seed(6247467)
+
+sim_regression_exp <- function(N = 1000, sons_by_father = 1, b0 = 90, b1 = 0.5, sigma = 5) {
+  x <- rep(c(165, 170, 175, 180, 185), sons_by_father)
+  beta_hat <- data.frame(beta0Hat = NA, beta1Hat = NA)
+  for (i in 1:N) {
+    y <- b0 + b1 * x + rexp(length(x)) - 1
+    m <- lm(y ~ x)
+    beta_hat[i, ] <- coef(m)
+  }
+  return(list("x" = x, "beta_hat" = beta_hat))
+}
+evaluate_sim_regression_exp <- function(n) {
+  sim <- sim_regression_exp(N = 10000, sons_by_father = n / 5)
+  print(colMeans(sim$beta_hat))
+
+  X <- matrix(nrow = n, ncol = 2)
+  X[, 1] <- 1
+  X[, 2] <- sim$x
+  empirical_variance <- var(sim$beta_hat)
+  print(empirical_variance)
+  real_covariance <- solve(t(X) %*% X) * 1
+  print(real_covariance)
+  qqnorm(sim$beta_hat$beta1Hat, main = paste("n=", n))
+  qqline(sim$beta_hat$beta1Hat)
+}
+```
+```{r}
+evaluate_sim_regression_exp(5)
+evaluate_sim_regression_exp(50)
+evaluate_sim_regression_exp(200)
+```

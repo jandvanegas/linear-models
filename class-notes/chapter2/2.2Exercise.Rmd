@@ -1,0 +1,48 @@
+# Exercise Blood Pressure
+
+In a small dose-finding study of a blood pressure reducing drug, 40 high blood 
+pressure patients (systolic blood pressure at least 150 mmHg) were randomised 
+over 4 concentrations of the active compound (arginine) in the drug: 0, 2, 5 
+and 10 mg per day. The outcome is the systolic blood pressure reduction after 
+2 months, measured in mmHg. 
+## Libraries
+```{r}
+library(ggplot2)
+```
+
+## Reading data
+```{r}
+load("Data/BloodPressure.RData")
+head(BloodPressure)
+```
+## Plot
+```{r}
+ggplot(BloodPressure, aes(x = dose, y = bp.reduction)) +
+  geom_point(color = "blue") +
+  xlab("Drug dose") +
+  ylab("Blood Pressure Reduction")
+```
+
+
+```{r}
+m.bloodpressure <- lm(BloodPressure$bp.reduction ~ BloodPressure$dose)
+```
+
+```{r}
+ggplot(
+  BloodPressure,
+  aes(x = dose, y = bp.reduction)
+) +
+  geom_point(color = "blue") +
+  xlab("dose (mg / day") +
+  ylab("systolic blood pressure reduction (mmHg)") +
+  theme(
+    axis.title = element_text(size = 15),
+    axis.text = element_text(size = 15),
+  ) +
+  geom_abline(
+    intercept = m.bloodpressure$coefficients[1],
+    slope = m.bloodpressure$coefficients[2],
+  )
+```
+

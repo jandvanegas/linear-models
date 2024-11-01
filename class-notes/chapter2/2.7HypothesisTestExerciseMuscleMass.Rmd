@@ -1,0 +1,30 @@
+# Muscle mass
+Scientists suspect that the muscle mass of people starts declining from a 
+certain age onwards.  To verify this research question, a nutritionist 
+randomly sampled 59 women, aged between 41 and 78. For these women; also the 
+muscle mass was measured (we actually only have a proxy based on 
+bioelectrical impedance measurements).
+
+Perform a regression analysis and formulate an answer to this research 
+question (including parameter estimates, confidence interval and hypothesis 
+test). You may use the next chunk of R code for reading the 
+data.
+
+```{r}
+muscles <- read.csv("Data/Muscles.txt", sep = " ")
+names(muscles) <- c("muscle.mass", "age")
+skim(muscles)
+```
+
+```{r}
+m <- lm(muscles$muscle.mass ~ muscles$age)
+m_summary <- summary(m)
+beta1.hat <- coef(m_summary)[, "Estimate"]["muscles$age"]
+sigmab1sq.hat <- coef(m_summary)[, "Std. Error"]["muscles$age"]
+t.observed <- beta1.hat / sigmab1sq.hat
+p.value.twosided <- 2 * (1 - pt(abs(t.observed), nrow(muscles) - 2))
+ci <- c(
+  beta1.hat - qt(0.975, nrow(muscles) - 2) * sigmab1sq.hat,
+  beta1.hat + qt(0.975, nrow(muscles) - 2) * sigmab1sq.hat
+)
+```

@@ -1,0 +1,52 @@
+# Galton example
+## Libraries
+
+## Libraries
+```{r}
+library(dplyr)
+library(skimr)
+library(ggplot2)
+```
+## Load data
+```{r}
+home_path <- Sys.getenv("HOME")
+setwd(paste(home_path, "/academics/hasselt/linear-models", sep = ""))
+Galton <- read.csv("./Data/galton.tab", sep = "\t")
+```
+## Filter
+```{r}
+Galton.sons <- Galton %>%
+  filter(gender == "M") %>%
+  group_by(family) %>%
+  slice(1) %>%
+  ungroup() %>%
+  mutate(
+    father.cm = father * 2.54,
+    son.cm = height * 2.54
+  ) %>%
+  select(father.cm, son.cm)
+```
+Getting the $\hat{\sigma^2}_{\hat{\beta_x}}$
+```{r}
+m <- lm(son.cm ~ father.cm, data = Galton.sons)
+model_summary <- summary(m)
+std_errors <- coef(model_summary)[, "Std. Error"]
+print(std_errors)
+```
+
+Getting the MSE
+```{r}
+# Extract Residual Standard Error
+residual_standard_error <- model_summary$sigma
+print(residual_standard_error^2)
+```
+And the residual number of degrees of freedom is  n − 2 = 173 − 2 = 171 .
+```{r}
+# quantile of t-distribution
+qt(0.975,df=171)
+# lower bound of 95% CI
+0.50766-qt(0.975,df=171)*0.0668
+# upper bound of 95% CI
+0.50766+qt(0.975,df=171)*0.0668
+confint(m)
+```

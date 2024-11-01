@@ -1,0 +1,9 @@
+{
+    "r.bracketedPaste": true,
+    "[r]": {
+        "editor.tabSize": 2
+    },
+    "[rmd]": {
+        "editor.tabSize": 2
+    }
+}

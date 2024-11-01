@@ -1,0 +1,52 @@
+```{r}
+set.seed(2672213)
+sim_regression_ci <- function(N = 10000, sons_by_father = 1, beta0 = 90, beta1 = 0.5, sigma = 5) {
+  x <- c(165, 170, 175, 180, 185)
+  x <- rep(x, times = sons_by_father)
+  results <- data.frame(
+    beta1Hat = NA, CI.lower = NA, CI.upper = NA,
+    cover = NA
+  )
+
+  for (i in 1:N) {
+    y <- beta0 + beta1 * x + rnorm(length(x), mean = 0, sd = sigma)
+    fit <- lm(y ~ x)
+    results[i, 1] <- coef(fit)[2]
+    results[i, 2:3] <- confint(fit, level = 0.95)[2, ]
+    results[i, 4] <- (beta1 > results[i, 2]) & (results[i, 3] > beta1) # how many times the interval covers the true value
+  }
+  return(results)
+}
+
+plot_ci <- function(sim, n_plot = nrow(sim), mn = min(sim$CI.lower), mx = max(sim$CI.upper), ...) {
+  plot(0, 0, xlim = c(mn, mx), ylim = c(0, n_plot), xlab = "", ylab = "experiment", type = "n", ...)
+
+  for (i in 1:n_plot) {
+    arrows(sim$CI.lower[i], i, sim$CI.upper[i], i,
+      code = 0, cex.axis = 1.5,
+      cex.lab = 1.5, col = 2 - sim$cover[i]
+    )
+    points(sim$beta1Hat[i], i)
+  }
+  abline(v = 0.5, col = 4, lty = 1)
+}
+```
+
+```{r}
+sim_ci5 <- sim_regression_ci(sons_by_father = 1)
+print(mean(sim_ci5$cover)) # mean of coverage should be around 0.95
+```
+Plot for different n
+
+```{r}
+set.seed(267213)
+
+par(mfrow = c(1, 3))
+plot_ci(sim_ci5, n_plot = 30, mn = -0.5, mx = 1.5, main = "n=5")
+
+sim_ci10 <- sim_regression_ci(N = 1000, sons_by_father = 2)
+plot_ci(sim_ci10, n_plot = 30, mn = -0.5, mx = 1.5, main = "n=10")
+
+sim_ci50 <- sim_regression_ci(N = 1000, sons_by_father = 10)
+plot_ci(sim_ci50, n_plot = 30, mn = -0.5, mx = 1.5, main = "n=50")
+```

@@ -1,0 +1,32 @@
+
+## Reading data
+```{r}
+load("Data/BloodPressure.RData")
+```
+
+```{r}
+# extract the 0mg/day and 2mg/day observations
+BloodPressure2 <- BloodPressure %>%
+  filter(dose == 0 | dose == 2)
+
+# define binary dummy
+BloodPressure2$x <- ifelse(BloodPressure2$dose == 2, 1, 0)
+table(BloodPressure2$dose, BloodPressure2$x)
+```
+
+```{r}
+m <- lm(bp.reduction ~ x, data = BloodPressure2)
+summary(m)
+```
+
+```{r}
+confint(m)
+```
+
+We can do the same with the t-test function
+```{r}
+t.test(bp.reduction ~ dose,
+  data = BloodPressure2,
+  var.equal = TRUE
+)
+```

@@ -1,0 +1,106 @@
+## Model Assesment
+## Libraries
+```{r}
+library(dplyr)
+library(skimr)
+library(ggplot2)
+```
+## Load data
+```{r}
+home_path <- Sys.getenv("HOME")
+setwd(paste(home_path, "/academics/hasselt/linear-models", sep = ""))
+Galton <- read.csv("./Data/galton.tab", sep = "\t")
+```
+## Filter
+```{r}
+Galton.sons <- Galton %>%
+  filter(gender == "M") %>%
+  group_by(family) %>%
+  slice(1) %>%
+  ungroup() %>%
+  mutate(
+    father.cm = father * 2.54,
+    son.cm = height * 2.54
+  ) %>%
+  select(father.cm, son.cm)
+```
+
+## Linearity of the regression model
+```{r}
+m <- lm(son.cm ~ father.cm, data = Galton.sons)
+e <- m$residuals
+x.all <- unique(Galton.sons$father.cm)
+ave.e <- c()
+for (x in x.all) {
+  ave.e <- c(ave.e, mean(e[Galton.sons$father.cm == x]))
+}
+plot(Galton.sons$father.cm, e,
+  cex.lab = 1.5, cex.axis = 1.5,
+  xlab = "Father's height (cm)", ylab = "residuals"
+)
+points(x.all, ave.e, col = 2, pch = 8)
+abline(h = 0, lty = 2)
+```
+- doesn't show any systemathic pattern
+
+## Normality of the error term
+```{r}
+qqnorm(m$resid,
+  cex.lab = 1.5, cex.axis = 1.5,
+  xlab = "expected quantiles", ylab = "residuals", main = ""
+)
+qqline(m$resid)
+```
+Figure shows the normal QQ-plot of the residuals of the Galton example. Most 
+of the points in the QQ-plot are close to the straight line with no 
+systematic pattern, and with only a few larger deviations in the right hand 
+tail of the distribution. However, the number of outliers (2 or 3) is very 
+small as compared to the sample size (173). The plot does also not reveal 
+systematic deviations from the straight line.
+
+## Homoskedasticity
+
+- Plots $e^2$
+```{r}
+par(mfrow = c(1, 2))
+heights <- unique(Galton.sons$father.cm)
+var.y <- c()
+for (x in heights) {
+  # var.y<-c(var.y,var(Galton.sons$son.cm[Galton.sons$father.cm==x]))
+  var.y <- c(var.y, mean(m$residuals[Galton.sons$father.cm == x]^2))
+}
+plot(heights, var.y,
+  cex.lab = 1.5, cex.axis = 1.5,
+  xlab = "Father's height (cm)",
+  ylab = "sample variance", col = 2, pch = 8
+)
+abline(h = sum(m$residuals^2) / 173, lty = 2)
+# note that the reference line is at MSE (n-2)/n
+
+plot(heights, sqrt(var.y),
+  cex.lab = 1.5, cex.axis = 1.5,
+  xlab = "Father's height (cm)",
+  ylab = "sample standard deviation",
+  col = 2, pch = 8
+)
+abline(h = sqrt(sum(m$residuals^2) / 173), lty = 2)
+```
+- Plots $|e|$
+```{r}
+par(mfrow = c(1, 2))
+e <- m$residuals
+plot(Galton.sons$father.cm, e^2,
+  cex.lab = 1.5, cex.axis = 1.5,
+  xlab = "Father's height (cm)",
+  ylab = "Squared residuals"
+)
+abline(h = sum(m$residuals^2) / (173 - 2), lty = 2)
+
+e <- m$residuals
+plot(Galton.sons$father.cm, abs(e),
+  cex.lab = 1.5, cex.axis = 1.5,
+  xlab = "Father's height (cm)",
+  ylab = "absolute value of the residuals"
+)
+abline(h = sum(abs(m$residuals)) / 173, lty = 2)
+```

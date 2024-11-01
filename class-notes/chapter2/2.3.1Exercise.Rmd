@@ -1,0 +1,37 @@
+# Simulation Study
+Repeat the previous simulation study, but now with other values of the regressor 
+and other numbers of replicates for each regressor value. In particular, consider 
+the setting with only two different values of the regressor ( $x = 165$ and
+$x = 185$) and at each of these values, consider 25 replicates. This makes a 
+total of $n = 50$ observations, just like in the simulation study.
+
+Check whether the LSEs of $\beta_0$ and $\beta_1$ are unbiased and compute the 
+empirical variance of the estimators from the simulation study. How do these 
+variances compare to the variances from the previous simulation study? Can you 
+give an explanation?
+
+```{r}
+x <- c(165, 185)
+x <- rep(x, 25)
+N <- 1000
+
+betaHat50 <- data.frame(beta0Hat = NA, beta1Hat = NA)
+
+for (i in 1:N) {
+  y <- 90 + 0.5 * x + rnorm(length(x), sd = 5)
+  m <- lm(y ~ x)
+  betaHat50[i, ] <- coef(m)
+}
+print(paste("Variance by simultaion: "))
+print(var(betaHat50))
+X <- matrix(nrow = 50, ncol = 2)
+X[, 1] <- 1
+X[, 2] <- x
+Var50 <- solve(t(X) %*% X) * 25
+print("Variance by formula:")
+print(Var50)
+```
+```{r}
+hist(betaHat50$beta1Hat, main = "n=50", xlab = "beta1-hat")
+abline(v = 0.5, col = 2)
+```

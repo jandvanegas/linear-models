@@ -1,0 +1,38 @@
+# First Simulations
+
+Generate random data, and plot it.
+```{r}
+set.seed(724245)
+x <- c(165, 170, 175, 180, 185)
+epx <- rnorm(5, sd = 5)
+y <- 0.5 * x + 90 + epx
+plot(x, y)
+abline(c(90, 0.5), col = 2)
+```
+Generate random data, multiple times and plot it.
+```{r}
+set.seed(254111)
+N <- 100
+x <- c(165, 170, 175, 180, 185)
+y <- 90 + 0.5 * x + rnorm(5, sd = 5)
+Data <- data.frame(experiment = 1, x = x, y = y)
+plot(x, y, ylim = c(150, 200))
+abline(c(90, 0.5), col = 2)
+
+for (experiment in 2:N) {
+  y <- 90 + 0.5 * x + rnorm(5, sd = 5)
+  points(x, y, col = experiment)
+  Data <- rbind(Data, data.frame(experiment = experiment, x = x, y = y))
+}
+```
+Histograms
+```{r}
+par(mfrow = c(2, 3))
+for (i in 1:5) {
+  y <- Data$y[Data$x == x[i]]
+  hist(y, main = paste("x=", x[i]), xlab = "y")
+  abline(v = 90 + 0.5 * x[i], col = 2, lwd = 2)
+  abline(v = mean(y), col = 4, lty = 2, lwd = 2)
+}
+par(mfrow = c(1, 1))
+```

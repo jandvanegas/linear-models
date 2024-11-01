@@ -1,0 +1,91 @@
+# Simple Linear Regression Analysis
+
+## setup
+Disable warnings and messages
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+## Libraries
+```{r}
+library(dplyr)
+library(skimr)
+library(ggplot2)
+```
+## Loading Data and Statistics
+```{r}
+home_path <- Sys.getenv("HOME")
+setwd(paste(home_path, "/academics/hasselt/linear-models", sep = ""))
+Galton <- read.csv("./Data/galton.tab", sep = "\t")
+head(Galton)
+```
+```{r, results='hide'}
+glimpse(Galton)
+```
+
+```{r, results='hide'}
+skim(Galton)
+```
+
+## Filtering Data
+```{r}
+Galton.sons <- Galton %>%
+  filter(gender == "M") %>%
+  group_by(family) %>%
+  slice(1) %>%
+  ungroup() %>%
+  mutate(
+    father.cm = father * 2.54,
+    son.cm = height * 2.54
+  ) %>%
+  select(father.cm, son.cm)
+glimpse(Galton.sons)
+```
+
+```{r}
+ggplot(
+  Galton.sons,
+  aes(x = father.cm, y = son.cm)
+) +
+  geom_point(color = "blue") +
+  xlab("length of father (cm)") +
+  ylab("length of son (cm)") +
+  theme(axis.title = element_text(size = 15), axis.text = element_text(size = 15))
+```
+
+## LSE
+```{r}
+m <- lm(son.cm ~ father.cm, data = Galton.sons)
+coef(m)
+```
+To make the intercepts have a meaning, we center the data.
+```{r}
+Galton.sons <- Galton.sons %>%
+  mutate(father.cm.centered = father.cm - mean(father.cm))
+m2 <- lm(son.cm ~ father.cm.centered, data = Galton.sons)
+coef(m2)
+```
+```{r}
+ggplot(
+  Galton.sons,
+  aes(x = father.cm, y = son.cm)
+) +
+  geom_point(color = "blue") +
+  xlab("length of father (cm)") +
+  ylab("length of son (cm)") +
+  theme(axis.title = element_text(size = 15), axis.text = element_text(size = 15)) +
+  geom_abline(intercept = m$coefficients[1], slope = m$coefficients[2]) +
+  geom_abline(intercept = 0, slope = 1, color = "red")
+```
+From the graph we see that the smaller fathers have sons that are on average taller than them. On the other hand, the taller fathers have sons that are on average smaller than them. In 1886 Galton also observed this phenomenon, which he called regression towards mediocrity.
+
+## Confidence Intervals
+```{r}
+summary_m <- summary(m)
+n <- length(Galton.sons$father.cm)
+print(qt(0.975, df = n - 2))
+print("lower bound")
+print(m$coefficients[2] - qt(0.975, df = n - 2) * summary_m$coefficients[2, 2])
+print("upper bound")
+print(m$coefficients[2] + qt(0.975, df = n - 2) * summary_m$coefficients[2, 2])
+print(confint(m))
+```
