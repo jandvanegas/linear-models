@@ -3,7 +3,16 @@
     "[r]": {
         "editor.tabSize": 2
     },
+    "r.rterm.linux": "/usr/local/bin/radian",
+    "r.rterm.option": [
+        "--no-save",
+        "--no-restore"
+    ],
     "[rmd]": {
         "editor.tabSize": 2
+    },
+    "r.lsp.enabled": true,
+    "files.associations": {
+        "*.Rmd": "rmd"
     }
 }
