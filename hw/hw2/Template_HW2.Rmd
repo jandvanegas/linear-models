@@ -1,0 +1,180 @@
+---
+title: "Linear Models: Homework 2"
+author: "Juan Andres VANEGAS JADAN"
+date: "2024-2025"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(car)
+```
+
+# Answers to the questions
+
+## Question 1a
+
+```{r, include=FALSE}
+load(file = "~/academics/hasselt/linear-models/Data/exam.RData")
+
+str(exam)
+
+exam$Biostat <- as.numeric(exam$specialisation == "BS")
+exam$DataSc <- as.numeric(exam$specialisation == "D")
+exam$Bioinf <- as.numeric(exam$specialisation == "BI")
+exam$Epi <- as.numeric(exam$specialisation == "E")
+```
+
+The model used is:
+\[
+\text{exam} = \beta_0 + \beta_1 \cdot \text{homeworks} + \beta_2 \cdot \text{Biostat} + \beta_3 \cdot \text{Epi} + \beta_4 \cdot \text{Bioinf} + \epsilon
+\]
+
+The multivariate model evaluates the impact of two parameters on
+the exam grade outcome. The first one is homeworks, which are the grades
+obtained by the students in their homework assigments, and the second one is the specialisation,
+which is expressed by a combination of dummy variables. 
+
+With the model prediction:
+```{r echo=F}
+m1 <- lm(exam ~ homeworks + Biostat + Epi + Bioinf, data = exam)
+print(summary(m1))
+```
+
+We will analyse one by one the parameters:
+
+- $(Intercept)$: the value of -14.85 tell us the baseline for Data Science students, when getting a grade of zero. This does not tell us anything about data science students, but it would be useful to compare with other specialisations using the dummy variables.
+
+- $homeworks$: the estimation value of 21.63 tell us that for each point a student get in homeworks score, the exam grade increases by 21.64 points, when holding
+the specialisation dummy variables constant. Now, if we analyse the p-value of 0.00154, we can conclude that the relationship homeworks-exam is significat at a 1% level. This is a strong predictor for the exam score.
+
+- $specialisation$:
+
+  - $Biostat$ dummy varible: the estimation value of 0.7154 tell us that Biostatistic students score 0.72 higher than Data Science students, when holding the homeworks regressor constant. However the p-value of 0.91 shows us that this statistic is not significant.
+
+  - $Epi$ dummy variable: the estimation value of 6.75 tell us that Epideomology students score 6.75 points higher than Data Science students, when holding the homeworks regressor constant. As before, a p-value of 0.6 shows us that this statistic is not significant.
+
+  - $Bioinf$: the estimation value of of 15.99 tell us that Bio Informatic students score 15.99 points higher than Data Science students, when holding the homeworks regressor constant. While p-value of 0.07 is outside the convention of 0.05 significance, which tell us that this is not significant, it may be that Bio Informatic students perform better than Data Science students. However, given the asignation to different specialisation were not assigned randomically, we could not conclude causality by the parameters, only correlation.
+
+If we analyse multicolinearity:
+```{r echo=F}
+vif(m1)
+```
+We can see that all values are lower than 5, showing us that there is no prove of multicolinearity.
+
+
+## Question 1b
+
+The result line of $homeworks$
+```{r echo=F}
+summary_m1 <- summary(m1)
+homeworks_param <- summary(m1)$coefficients["homeworks", ]
+print(homeworks_param)
+```
+
+First, we need to obtain the degrees of freedom. We have 38 samples, so this minus the number of parameters, give as 33 as 
+degrees of freedom. From $(2.10)$, we know
+\[
+\begin{equation}
+  \frac{\hat\beta_1 - \beta_1}{\hat\sigma_{\beta_1}} \sim t_{df} .
+  \tag{2.10}
+\end{equation}
+\]
+so we compute the quantile at 0.975 for the t distribution at 33 degrees of freedom, and multiply by the standard error to
+obtain the margin error. With this we get a confidence interval of
+```{r echo=F}
+n <- nrow(exam)
+m1_df <- n - (length(coef(m1)))
+b1_estimation <- homeworks_param["Estimate"]
+estimation_stderr <- homeworks_param["Std. Error"]
+estimation_pvalue <- homeworks_param["Pr(>|t|)"]
+t_value <- qt(0.975, m1_df)
+margin_error <- t_value * estimation_stderr
+lower_bound <- b1_estimation - margin_error
+upper_bound <- b1_estimation + margin_error
+print(paste(lower_bound, upper_bound))
+```
+This means that with 95% confidence that for each point increased in the homework grade, the exam score will increase 
+between 8.89 and 34.39, when the specialisation dummy are held constant.
+
+
+## Question 1c
+
+Since the p-value is lower than 0.05, we can refuse the null hypothesis $H_0: \beta_1 =0$, and makes as
+conclude that homeworks grades have a significant effect on the exam score.
+
+## Question 1d
+
+If we include $simulation$ score as a regressor, we obtain:
+```{r echo=F}
+m2 <- lm(exam ~ homeworks + Biostat + Epi + Bioinf + simulation, data = exam)
+summary(m2)
+```
+For this model, we see a slight increase of the parameter $\beta_1$, which correspons to the $homeworks$ regressor parameter.
+This goes from 21.6388 to 21.6435. However, we also see an increase on the Std. Error of the the parameter, which goes from 6.26
+to 6.31, and the p-value which goes from 0.0015 to 0.0017. This could be an indication that the homeworks and the simulation grades
+share information. In other words, this leads us to evaluate if there is multi colinearity between these regressors.
+
+We also see that the simulation score has a positive effect of 2.81 on the exam score when other regressors remain constant. However,
+with a p-value of 0.48, this parameter estimate cannot be consider significant.
+
+## Question 1e
+
+If we add the interaction effect to the model, we would get:
+
+```{r echo=F}
+m3 <- lm(
+  exam ~ homeworks + Biostat + Epi + Bioinf + simulation + homeworks * simulation,
+  data = exam
+)
+summary(m3)
+```
+Now we see  that none of the parameters estimates are significant (>0.05). If we only focus on 
+the $homeworks \cdot simulation$ effect, it gives us a value of 12.223, but with a p-value of 0.136,
+showing us low signifcance. Therefore, we are not able to refuse the hypthesis $H_0: \beta_6 = 0$. In other words,
+we do not see evidence to include this interaction as a regressor.
+
+## Question 1f
+
+We can check if there is multicolinearity in the last regressor by computing the VIF, with this we obtain:
+```{r echo=F}
+vif(m3)
+```
+These results show us a clear multicolinearity of the interaction regressors, the simulation grades, and homeworks grades. We 
+should not include the interation in this model. To check if this multicolinearity happens between homeworks grades and simulation grades,
+ we compute the VIF for the second model, which does not include the interaction between these regressors:
+
+```{r echo=F}
+vif(m2)
+```
+
+All values are less than five, showing us not multicolinearity  between homeworks and simulations. This confirms when we saw that the interation regressor was not 
+significant.
+
+
+## Question 1g
+
+From the analysis, we can say that homeworks grades have a significant impact on the exam score. 
+Students that perform well on their homework assigments are more likely to performe well on the exam.
+
+\newpage
+
+# Appendix with R code
+
+```{r}
+# Change the path to the data file in the following line
+load(file = "~/academics/hasselt/linear-models/Data/exam.RData")
+
+str(exam)
+
+exam$Biostat <- as.numeric(exam$specialisation == "BS")
+exam$DataSc <- as.numeric(exam$specialisation == "D")
+exam$Bioinf <- as.numeric(exam$specialisation == "BI")
+exam$Epi <- as.numeric(exam$specialisation == "E")
+```
+
+```{r}
+m1 <- lm(exam ~ homeworks + Biostat + Epi + Bioinf, data = exam)
+summary(m1)
+```
+
